@@ -2,8 +2,11 @@ package docker
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
+	"log"
 	"net"
+	"strings"
 )
 
 type DockerInfo struct {
@@ -48,4 +51,34 @@ func getBody(result []byte) (body []byte) {
 		}
 	}
 	return
+}
+
+// PullImg 拉取指定镜像
+// sock docker.sock文件位置
+// api docker api endpoint
+func PullImg(sock, api string) error {
+	addr := net.UnixAddr{sock, "unix"}
+	conn, err := net.DialUnix("unix", nil, &addr)
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.Write([]byte("POST " + api + " HTTP/1.0\r\n\r\n"))
+	if err != nil {
+		return err
+	}
+
+	result, err := ioutil.ReadAll(conn)
+	if err != nil {
+		return err
+	}
+
+	body := getBody(result[:])
+
+	log.Println(string(body))
+	if strings.Contains(string(body), "errorDetail") && strings.Contains(string(body), "error") {
+		return errors.New(string(body))
+	}
+
+	return nil
 }

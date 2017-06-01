@@ -195,8 +195,9 @@ func (s Systemd) PullImg(img string) error {
 		apiVersion = util.VERSION[version]
 	}
 
-	log.Println(apiVersion)
-	return nil
+	api := "http:/v" + apiVersion + "/images/create?fromImage=" + img
+
+	return docker.PullImg(sock, api)
 }
 
 func (s Systemd) getDockerSocket() (string, error) {
@@ -211,13 +212,6 @@ func (s Systemd) getDockerSocket() (string, error) {
 			conn.Close()
 		}
 	}()
-
-	// dockerInfo, err := conn.GetUnitProperties("docker.socket")
-	// if err != nil {
-	// 	return "", err
-	// }
-
-	// log.Println(dockerInfo)
 
 	sc, err := conn.GetUnitTypeProperties("docker.socket", "Socket")
 	if err != nil {
