@@ -16,6 +16,40 @@ import (
 
 var msg string
 
+// PullImgService 拉取指定镜像
+func PullImgService(w http.ResponseWriter, r *http.Request) {
+	vals := r.URL.Query()
+	img, ok := vals["img"]
+	if !ok {
+		msg = fmt.Sprintf("镜像名称不得为空")
+		Sandstorm.HTTPError(w, msg, http.StatusInternalServerError)
+		return
+	}
+
+	oriDriver, ok := vals["driver"]
+	if !ok {
+		msg = fmt.Sprintf("驱动名称不得为空")
+		Sandstorm.HTTPError(w, msg, http.StatusInternalServerError)
+		return
+	}
+
+	var err error
+
+	switch strings.ToUpper(oriDriver[0]) {
+	case util.SYSTEMD:
+		dri := driver.Systemd{}
+		err = driver.PullImg(dri, img[0])
+	}
+
+	if err != nil {
+		Sandstorm.HTTPError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	Sandstorm.HTTPSuccess(w, "")
+	return
+}
+
 // ListService 获取指定驱动所支持的所有服务
 // driver: 指定驱动类型。 systemd/
 func ListService(w http.ResponseWriter, r *http.Request) {
