@@ -1,11 +1,12 @@
 package util
 
 const (
-	RESTART_SRV = "/post/restart/{name}"
-	LISTALLSRV  = "/get/all/services"
-	PULLIMG     = "/put/docker/img"
-	STARTSRV    = "/post/start/service"
-	SYSTEMD     = "SYSTEMD"
+	// RESTART_SRV = "/post/restart/{name}"
+	LISTALLSRV = "/get/all/services"
+	PULLIMG    = "/put/docker/img"
+	STARTSRV   = "/post/start/service"
+	RESTAETSRV = "/put/restart/service"
+	SYSTEMD    = "SYSTEMD"
 )
 
 var (

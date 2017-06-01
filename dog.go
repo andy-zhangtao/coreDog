@@ -14,10 +14,11 @@ func main() {
 
 	r := mux.NewRouter()
 	s := r.PathPrefix("/v1").Subrouter()
-	s.HandleFunc(util.RESTART_SRV, handler.RestartService).Methods(http.MethodPost)
+	// s.HandleFunc(util.RESTART_SRV, handler.RestartService).Methods(http.MethodPost)
 	s.HandleFunc(util.LISTALLSRV, handler.ListService).Methods(http.MethodGet)
 	s.HandleFunc(util.PULLIMG, handler.PullImgService).Methods(http.MethodPut)
 	s.HandleFunc(util.STARTSRV, handler.StartService).Methods(http.MethodPost)
+	s.HandleFunc(util.RESTAETSRV, handler.RestartService).Methods(http.MethodPut)
 
 	fmt.Printf("CoreDog[%s]启动\n", version())
 

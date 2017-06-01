@@ -19,4 +19,9 @@ A smart CD tools
     driver:
         * systemd
     srv: 服务名称
-    
+
+* PUT /v1/put/restart/service 通知指定驱动重启指定服务
+    query param: 
+    driver:
+        * systemd
+    srv: 服务名称
