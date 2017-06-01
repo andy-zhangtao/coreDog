@@ -5,3 +5,6 @@ go:
 
 install:
 - go build -a
+
+script:
+- go test

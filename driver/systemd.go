@@ -7,7 +7,9 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/andy-zhangtao/coreDog/driver/docker"
 	"github.com/andy-zhangtao/coreDog/model"
+	"github.com/andy-zhangtao/coreDog/util"
 	"github.com/coreos/go-systemd/dbus"
 )
 
@@ -179,6 +181,21 @@ func (s Systemd) PullImg(img string) error {
 		return errors.New("Get [docker.sock] error!")
 	}
 
+	version, err := docker.GetDockerVersion(sock)
+	if err != nil {
+		return err
+	}
+
+	var apiVersion string
+	if util.VERSION[version] == "" {
+		vers := strings.Split(version, ".")
+		v := vers[0] + "." + vers[1]
+		apiVersion = util.VERSION[v]
+	} else {
+		apiVersion = util.VERSION[version]
+	}
+
+	log.Println(apiVersion)
 	return nil
 }
 
