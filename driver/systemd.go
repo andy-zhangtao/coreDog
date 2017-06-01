@@ -70,19 +70,21 @@ func (s Systemd) Start(srv model.Service) error {
 		}
 	}()
 
-	units, err := conn.ListUnits()
+	units, err := conn.ListUnitFiles()
 	if err != nil {
 		msg := fmt.Sprintf("查询服务文件失败[%s]", err.Error())
 		return errors.New(msg)
 	}
 
 	hasThisSrv := false
-	var us dbus.UnitStatus
+	var us string
 
 	for _, u := range units {
-		if strings.Compare(u.Name, srv.Name) == 0 {
+		un := strings.Split(u.Path, "/")
+		// log.Println(u.Path, un[len(un)-1])
+		if strings.Compare(un[len(un)-1], srv.Name) == 0 {
 			hasThisSrv = true
-			us = u
+			us = un[len(un)-1]
 			break
 		}
 	}
@@ -91,15 +93,15 @@ func (s Systemd) Start(srv model.Service) error {
 		return errors.New("I can not find this service! Please confirem service name")
 	}
 
-	if us.ActiveState != "active" {
-		msg := fmt.Sprintf("服务文件[%s]未处于active状态,当前状态[%s]", us.Name, us.ActiveState)
-		return errors.New(msg)
-	}
+	// if us.ActiveState != "active" {
+	// 	msg := fmt.Sprintf("服务文件[%s]未处于active状态,当前状态[%s]", us.Name, us.ActiveState)
+	// 	return errors.New(msg)
+	// }
 
 	reschan := make(chan string)
-	_, err = conn.StartUnit(us.Name, "replace", reschan)
+	_, err = conn.StartUnit(us, "replace", reschan)
 	if err != nil {
-		msg := fmt.Sprintf("服务[%s]重启失败[%s]", us.Name, err.Error())
+		msg := fmt.Sprintf("服务[%s]重启失败[%s]", us, err.Error())
 		return errors.New(msg)
 	}
 

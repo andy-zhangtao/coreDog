@@ -55,8 +55,8 @@ func PullImgService(w http.ResponseWriter, r *http.Request) {
 func ListService(w http.ResponseWriter, r *http.Request) {
 	vals := r.URL.Query()
 	oriDriver, ok := vals["driver"]
-	if strings.TrimSpace(oriDriver[0]) == "" || !ok {
-		msg = fmt.Sprintf("重启服务名不得为空")
+	if !ok {
+		msg = fmt.Sprintf("驱动类型不得为空")
 		Sandstorm.HTTPError(w, msg, http.StatusInternalServerError)
 		return
 	}
@@ -78,6 +78,43 @@ func ListService(w http.ResponseWriter, r *http.Request) {
 
 	Sandstorm.HTTPSuccess(w, string(content))
 	return
+}
+
+// StartService 启动指定服务
+// driver 驱动类型
+// service 服务名称
+func StartService(w http.ResponseWriter, r *http.Request) {
+	vals := r.URL.Query()
+	srv, ok := vals["srv"]
+	if !ok {
+		msg = fmt.Sprintf("服务名称不得为空")
+		Sandstorm.HTTPError(w, msg, http.StatusInternalServerError)
+		return
+	}
+
+	oriDriver, ok := vals["driver"]
+	if !ok {
+		msg = fmt.Sprintf("驱动名称不得为空")
+		Sandstorm.HTTPError(w, msg, http.StatusInternalServerError)
+		return
+	}
+
+	var err error
+
+	switch strings.ToUpper(oriDriver[0]) {
+	case util.SYSTEMD:
+		dri := driver.Systemd{}
+		err = driver.StartService(dri, srv[0])
+	}
+
+	if err != nil {
+		Sandstorm.HTTPError(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	Sandstorm.HTTPSuccess(w, "")
+	return
+
 }
 
 // RestartService 重启服务

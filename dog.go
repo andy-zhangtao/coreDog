@@ -17,6 +17,8 @@ func main() {
 	s.HandleFunc(util.RESTART_SRV, handler.RestartService).Methods(http.MethodPost)
 	s.HandleFunc(util.LISTALLSRV, handler.ListService).Methods(http.MethodGet)
 	s.HandleFunc(util.PULLIMG, handler.PullImgService).Methods(http.MethodPut)
+	s.HandleFunc(util.STARTSRV, handler.StartService).Methods(http.MethodPost)
+
 	fmt.Printf("CoreDog[%s]启动\n", version())
 
 	fmt.Println(http.ListenAndServe(":"+os.Getenv("RUNTIME_PORT"), r))
