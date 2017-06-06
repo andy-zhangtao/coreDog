@@ -36,11 +36,13 @@ type RancherProject struct {
 	Data []RancherProjectInfo `json:"data"`
 }
 
-// RancherProjectInfo 每个工程详细信息
-// 目前仅保存ID和Name两项信息
+// RancherProjectInfo 每个Project/Service详细信息
+// 当为Project时保存ID,Name两项信息
+// 当为Service时保存ID,Name,State三项信息
 type RancherProjectInfo struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	State string `json:"state,omitempty"`
 }
 
 // List 获取Rancher中所有的服务
@@ -49,14 +51,18 @@ func (r Rancher) List() ([]model.Service, error) {
 		return nil, errors.New("Rancher Env Can not be empty!")
 	}
 
+	if !strings.HasPrefix(r.Domain, "http") {
+		r.Domain = "http://" + r.Domain
+	}
+
 	envID, err := r.getEnvID(r.Env)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("Env ID [%s] \n", envID)
+	log.Printf("Env [%s] ID [%s] \n", r.Env, envID)
 
-	return nil, nil
+	return r.getService(envID)
 }
 
 // Start 启动Rancher中指定服务
@@ -106,9 +112,44 @@ func (r Rancher) getEnvID(env string) (string, error) {
 		}
 	}
 
-	return "", errors.New("Can not find this env ID:" + env)
+	return "", errors.New("Can not find this env ID: " + env)
 }
 
 func (r Rancher) getService(envid string) ([]model.Service, error) {
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", r.Domain+ENVAPI+envid+"/service", nil)
+	req.SetBasicAuth(r.AccessKey, r.SecretKey)
+	if err != nil {
+		return nil, err
+	}
 
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var srvs RancherProject
+
+	err = json.Unmarshal(content, &srvs)
+	if err != nil {
+		return nil, err
+	}
+
+	var msrv []model.Service
+
+	for _, s := range srvs.Data {
+		var ms = model.Service{
+			Name:   s.Name,
+			Status: s.State,
+			Type:   "rancher service",
+		}
+
+		msrv = append(msrv, ms)
+	}
+
+	return msrv, nil
 }

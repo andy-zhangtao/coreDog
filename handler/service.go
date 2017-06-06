@@ -105,11 +105,49 @@ func ListService(w http.ResponseWriter, r *http.Request) {
 	case util.SYSTEMD:
 		dri := driver.Systemd{}
 		srv, err = driver.ListService(dri)
+	case util.RANCHER:
+		accessKey, ok := vals["accesskey"]
+		if !ok {
+			msg = fmt.Sprintf("驱动为Rancher时,AccessKey 不得为空")
+			Sandstorm.HTTPError(w, msg, http.StatusInternalServerError)
+			return
+		}
+		secretKey, ok := vals["secretkey"]
+		if !ok {
+			msg = fmt.Sprintf("驱动为Rancher时,secretKey 不得为空")
+			Sandstorm.HTTPError(w, msg, http.StatusInternalServerError)
+			return
+		}
+
+		domain, ok := vals["domain"]
+		if !ok {
+			domain = append(domain, "localhost:8080")
+		}
+		env, ok := vals["env"]
+		if !ok {
+			msg = fmt.Sprintf("驱动为Rancher时,env 不得为空")
+			Sandstorm.HTTPError(w, msg, http.StatusInternalServerError)
+			return
+		}
+
+		dri := driver.Rancher{
+			AccessKey: accessKey[0],
+			SecretKey: secretKey[0],
+			Domain:    domain[0],
+			Env:       env[0],
+		}
+
+		srv, err = driver.ListService(dri)
+	}
+
+	if err != nil {
+		Sandstorm.HTTPError(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	content, err := json.Marshal(srv)
 	if err != nil {
-		Sandstorm.HTTPError(w, msg, http.StatusInternalServerError)
+		Sandstorm.HTTPError(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

@@ -2,11 +2,18 @@ package util
 
 const (
 	// RESTART_SRV = "/post/restart/{name}"
+	// LISTALLSRV 获取所有service API
 	LISTALLSRV = "/get/all/services"
-	PULLIMG    = "/put/docker/img"
-	STARTSRV   = "/post/start/service"
+	// PULLIMG 拉取镜像API
+	PULLIMG = "/put/docker/img"
+	// STARTSRV 启动service API
+	STARTSRV = "/post/start/service"
+	// RESTAETSRV 重启service API
 	RESTAETSRV = "/put/restart/service"
-	SYSTEMD    = "SYSTEMD"
+	// SYSTEMD systemd驱动名称
+	SYSTEMD = "SYSTEMD"
+	// RANCHER rancher 驱动名称
+	RANCHER = "RANCHER"
 )
 
 var (
