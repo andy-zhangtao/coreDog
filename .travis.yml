@@ -5,7 +5,7 @@ go:
 
 install:
 - export GITVER=$(git rev-parse HEAD)
-- export VER=${GITVER:0:8}
+- export VER='v1.0'-${GITVER:0:8}
 - day=$(date +%Y%m%d)
 - export TAG=${day}'-'${VER}
 - go build -ldflags "-X main._VERSION_='$TAG'"
