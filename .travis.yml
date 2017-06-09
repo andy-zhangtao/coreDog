@@ -8,7 +8,7 @@ install:
 - export VER=${GITVER:0:8}
 - day=$(date +%Y%m%d)
 - export TAG=${day}'-'${VER}
-- go build -a
+- go build -ldflags "-X main._VERSION_='$TAG'"
 
 script:
 - go test
