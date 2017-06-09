@@ -4,6 +4,10 @@ go:
   - 1.8
 
 install:
+- export GITVER=$(git rev-parse HEAD)
+- export VER=${GITVER:0:8}
+- day=$(date +%Y%m%d)
+- export TAG=${day}'-'${VER}
 - go build -a
 
 script:

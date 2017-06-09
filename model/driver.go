@@ -25,6 +25,8 @@ type Service struct {
 	Status string `json:"status"`
 	// Description 服务描述信息
 	Description string `json:"description"`
+	// SrvID 服务ID
+	SrvID string `json:"id"`
 }
 
 // MetaData 部署原信息
