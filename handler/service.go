@@ -40,6 +40,45 @@ func RestartService(w http.ResponseWriter, r *http.Request) {
 	case util.SYSTEMD:
 		dri := driver.Systemd{}
 		err = driver.RestartService(dri, srv[0])
+	case util.RANCHER:
+		accessKey, ok := vals["accesskey"]
+		if !ok {
+			msg = fmt.Sprintf("驱动为Rancher时,AccessKey 不得为空")
+			Sandstorm.HTTPError(w, msg, http.StatusInternalServerError)
+			return
+		}
+		secretKey, ok := vals["secretkey"]
+		if !ok {
+			msg = fmt.Sprintf("驱动为Rancher时,secretKey 不得为空")
+			Sandstorm.HTTPError(w, msg, http.StatusInternalServerError)
+			return
+		}
+
+		domain, ok := vals["domain"]
+		if !ok {
+			domain = append(domain, "http://localhost:8080")
+		}
+
+		if !strings.HasPrefix(domain[0], "http") {
+			domain[0] = "http://" + domain[0]
+		}
+
+		env, ok := vals["env"]
+		if !ok {
+			msg = fmt.Sprintf("驱动为Rancher时,env 不得为空")
+			Sandstorm.HTTPError(w, msg, http.StatusInternalServerError)
+			return
+		}
+
+		dri := driver.Rancher{
+			AccessKey: accessKey[0],
+			SecretKey: secretKey[0],
+			Domain:    domain[0],
+			Env:       env[0],
+			Service:   srv[0],
+		}
+
+		err = driver.RestartService(dri, dri.Service)
 	}
 
 	if err != nil {
@@ -121,8 +160,13 @@ func ListService(w http.ResponseWriter, r *http.Request) {
 
 		domain, ok := vals["domain"]
 		if !ok {
-			domain = append(domain, "localhost:8080")
+			domain = append(domain, "http://localhost:8080")
 		}
+
+		if !strings.HasPrefix(domain[0], "http") {
+			domain[0] = "http://" + domain[0]
+		}
+
 		env, ok := vals["env"]
 		if !ok {
 			msg = fmt.Sprintf("驱动为Rancher时,env 不得为空")
@@ -180,6 +224,45 @@ func StartService(w http.ResponseWriter, r *http.Request) {
 	case util.SYSTEMD:
 		dri := driver.Systemd{}
 		err = driver.StartService(dri, srv[0])
+	case util.RANCHER:
+		accessKey, ok := vals["accesskey"]
+		if !ok {
+			msg = fmt.Sprintf("驱动为Rancher时,AccessKey 不得为空")
+			Sandstorm.HTTPError(w, msg, http.StatusInternalServerError)
+			return
+		}
+		secretKey, ok := vals["secretkey"]
+		if !ok {
+			msg = fmt.Sprintf("驱动为Rancher时,secretKey 不得为空")
+			Sandstorm.HTTPError(w, msg, http.StatusInternalServerError)
+			return
+		}
+
+		domain, ok := vals["domain"]
+		if !ok {
+			domain = append(domain, "http://localhost:8080")
+		}
+
+		if !strings.HasPrefix(domain[0], "http") {
+			domain[0] = "http://" + domain[0]
+		}
+
+		env, ok := vals["env"]
+		if !ok {
+			msg = fmt.Sprintf("驱动为Rancher时,env 不得为空")
+			Sandstorm.HTTPError(w, msg, http.StatusInternalServerError)
+			return
+		}
+
+		dri := driver.Rancher{
+			AccessKey: accessKey[0],
+			SecretKey: secretKey[0],
+			Domain:    domain[0],
+			Env:       env[0],
+			Service:   srv[0],
+		}
+
+		err = driver.StartService(dri, dri.Service)
 	}
 
 	if err != nil {

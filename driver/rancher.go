@@ -3,9 +3,11 @@ package driver
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/andy-zhangtao/coreDog/model"
@@ -51,10 +53,6 @@ func (r Rancher) List() ([]model.Service, error) {
 		return nil, errors.New("Rancher Env Can not be empty!")
 	}
 
-	if !strings.HasPrefix(r.Domain, "http") {
-		r.Domain = "http://" + r.Domain
-	}
-
 	envID, err := r.getEnvID(r.Env)
 	if err != nil {
 		return nil, err
@@ -67,11 +65,66 @@ func (r Rancher) List() ([]model.Service, error) {
 
 // Start 启动Rancher中指定服务
 func (r Rancher) Start(srv model.Service) error {
+	eid, err := r.getEnvID(r.Env)
+	if err != nil {
+		return err
+	}
+
+	sid, err := r.getSrvID(eid, r.Service)
+	if err != nil {
+		return err
+	}
+
+	reqURL := fmt.Sprintf("%s%s%s/services/%s?action=activate", r.Domain, ENVAPI, eid, sid)
+	client := &http.Client{}
+	// log.Println(reqURL)
+	req, err := http.NewRequest("POST", reqURL, nil)
+	req.SetBasicAuth(r.AccessKey, r.SecretKey)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode > 300 {
+		return errors.New("Service Activate Error. " + strconv.Itoa(resp.StatusCode))
+	}
+
 	return nil
 }
 
 // Restart 重启Rancher中的指定服务
 func (r Rancher) Restart(srv model.Service) error {
+	eid, err := r.getEnvID(r.Env)
+	if err != nil {
+		return err
+	}
+
+	sid, err := r.getSrvID(eid, r.Service)
+	if err != nil {
+		return err
+	}
+
+	reqURL := fmt.Sprintf("%s%s%s/services/%s?action=restart", r.Domain, ENVAPI, eid, sid)
+	client := &http.Client{}
+
+	// 固定重启策略
+	req, err := http.NewRequest("POST", reqURL, strings.NewReader("{ \"rollingRestartStrategy\": { \"batchSize\": 1, \"intervalMillis\": 2000 }}"))
+	req.SetBasicAuth(r.AccessKey, r.SecretKey)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode > 300 {
+		return errors.New("Service Restart Error. " + strconv.Itoa(resp.StatusCode))
+	}
+
 	return nil
 }
 
@@ -115,6 +168,8 @@ func (r Rancher) getEnvID(env string) (string, error) {
 	return "", errors.New("Can not find this env ID: " + env)
 }
 
+// getService 获取指定服务列表
+// envid 服务所在的Env ID
 func (r Rancher) getService(envid string) ([]model.Service, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", r.Domain+ENVAPI+envid+"/service", nil)
@@ -146,10 +201,29 @@ func (r Rancher) getService(envid string) ([]model.Service, error) {
 			Name:   s.Name,
 			Status: s.State,
 			Type:   "rancher service",
+			SrvID:  s.ID,
 		}
 
 		msrv = append(msrv, ms)
 	}
 
 	return msrv, nil
+}
+
+// getSrvID 获取指定服务ID
+// envid 服务所在的Env ID
+// srvname 服务名称
+func (r Rancher) getSrvID(envid, srvname string) (string, error) {
+	srvs, err := r.getService(envid)
+	if err != nil {
+		return "", err
+	}
+
+	for _, s := range srvs {
+		if strings.Compare(s.Name, srvname) == 0 {
+			return s.SrvID, nil
+		}
+	}
+
+	return "", errors.New("Can not find this service ID")
 }
